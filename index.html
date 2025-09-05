@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+<body>
+  
+</body>
+<script src="vnlunar.js"></script>
+<script>
+  (() => {
+  // Local-only names (won’t clash with globals)
+  const {
+    UniversalFromJD,
+    LocalFromJD,
+    LocalToJD,
+    NewMoon,
+    SunLongitude
+  } = VNLunar;
+  // Small helpers
+  const eqArr = (a, b) => Array.isArray(a) && Array.isArray(b) && a.length === b.length && a.every((v,i)=>v===b[i]);
+  const near = (x, y, eps = 1e-12) => Math.abs(x - y) <= eps;
+  const fmt3 = (a) => Array.isArray(a) ? `[${a.join(", ")}]` : String(a);
+
+  function test(label, expected, actual, cmp = (e,a)=>e===a) {
+    const ok = cmp(expected, actual);
+    console.log(`${ok ? "✅" : "❌"} ${label}`);
+    console.log("   expected:", expected);
+    console.log("   actual  :", actual);
+  }
+
+  // ---------------------------
+  // UniversalFromJD examples
+  // ---------------------------
+  test(
+    "UniversalFromJD(2451544.5) -> (1, 1, 2000)",
+    [1, 1, 2000],
+    UniversalFromJD(2451544.5),
+    eqArr
+  );
+
+  test(
+    "UniversalFromJD(2451544.2083333335) -> (31, 12, 1999)",
+    [31, 12, 1999],
+    UniversalFromJD(2451544.2083333335),
+    eqArr
+  );
+
+  test(
+    "UniversalFromJD(2299160.5) -> (15, 10, 1582)",
+    [15, 10, 1582],
+    UniversalFromJD(2299160.5),
+    eqArr
+  );
+
+  test(
+    "UniversalFromJD(2299159.5) -> (4, 10, 1582)",
+    [4, 10, 1582],
+    UniversalFromJD(2299159.5),
+    eqArr
+  );
+
+  // ---------------------------
+  // LocalToJD / LocalFromJD (UTC+7)
+  // ---------------------------
+  const JD_local_01012000_utc7 = LocalToJD(1, 1, 2000, 7);
+  test(
+    "LocalToJD(1,1,2000, utc=7) ≈ 2451544.2083333335",
+    2451544.2083333335,
+    JD_local_01012000_utc7,
+    (e,a)=>near(e,a,1e-12)
+  );
+
+  test(
+    "LocalFromJD(2451544.2083333335, utc=7) -> (1,1,2000)",
+    [1,1,2000],
+    LocalFromJD(2451544.2083333335, 7),
+    eqArr
+  );
+
+  // ---------------------------
+  // NewMoon(k)
+  // ---------------------------
+  const nm1236 = NewMoon(1236);
+  test(
+    "NewMoon(1236) ≈ 2451520.4393767994",
+    2451520.4393767994,
+    nm1236,
+    (e,a)=>near(e,a,1e-9)
+  );
+  test(
+    "LocalFromJD(NewMoon(1236), utc=7) -> (8,12,1999)",
+    [8,12,1999],
+    LocalFromJD(nm1236, 7),
+    eqArr
+  );
+
+  const nm1237 = NewMoon(1237);
+  test(
+    "NewMoon(1237) ≈ 2451550.2601371277",
+    2451550.2601371277,
+    nm1237,
+    (e,a)=>near(e,a,1e-9)
+  );
+  test(
+    "LocalFromJD(NewMoon(1237), utc=7) -> (7,1,2000)",
+    [7,1,2000],
+    LocalFromJD(nm1237, 7),
+    eqArr
+  );
+
+  const nm1238 = NewMoon(1238);
+  test(
+    "NewMoon(1238) ≈ 2451580.0448043263",
+    2451580.0448043263,
+    nm1238,
+    (e,a)=>near(e,a,1e-9)
+  );
+  test(
+    "LocalFromJD(NewMoon(1238), utc=7) -> (5,2,2000)",
+    [5,2,2000],
+    LocalFromJD(nm1238, 7),
+    eqArr
+  );
+
+  const nm1239 = NewMoon(1239);
+  test(
+    "NewMoon(1239) ≈ 2451609.721434823",
+    2451609.721434823,
+    nm1239,
+    (e,a)=>near(e,a,1e-9)
+  );
+  test(
+    "LocalFromJD(NewMoon(1239), utc=7) -> (6,3,2000)",
+    [6,3,2000],
+    LocalFromJD(nm1239, 7),
+    eqArr
+  );
+
+  // ---------------------------
+  // SunLongitude examples
+  // NOTE: the Lua comment appears to reuse the same JD for two dates.
+  // We show both: the JD in the comment and the *correct* JD for 2000-01-07 00:00 (UTC+7).
+  // ---------------------------
+  const JD_Hanoi_1999_12_08_midnight = 2451520.2083333335; // given
+  const SL_1999_12_08 = SunLongitude(JD_Hanoi_1999_12_08_midnight);
+  test(
+    "SunLongitude(2451520.2083333335) ≈ 4.453168980086705",
+    4.453168980086705,
+    SL_1999_12_08,
+    (e,a)=>near(e,a,1e-12)
+  );
+
+  // Likely the intended second date was 2000-01-07 00:00 Hanoi, whose JD is 2451550.2083333335
+  const JD_Hanoi_2000_01_07_midnight = 2451550.2083333335;
+  const SL_2000_01_07 = SunLongitude(JD_Hanoi_2000_01_07_midnight);
+  console.log("ℹ️ Note: The second SunLongitude example in the Lua comment likely has a JD typo.");
+  test(
+    "SunLongitude(2000-01-07 00:00 Hanoi) -> JD 2451550.2083333335 ≈ 4.986246180809974",
+    4.986246180809974,
+    SL_2000_01_07,
+    (e,a)=>near(e,a,1e-12)
+  );
+
+  // Also show the exact inequality check from the Lua comment:
+  const threePiOver2 = 1.5 * Math.PI; // ≈ 4.71238898038469
+  console.log("Check inequality from comment:");
+  console.log("   1999-12-08 SL:", SL_1999_12_08, "< 3π/2:", SL_1999_12_08 < threePiOver2);
+  console.log("   2000-01-07 SL:", SL_2000_01_07, "> 3π/2:", SL_2000_01_07 > threePiOver2);
+  })();
+</script>
+
+
+
+</html>
